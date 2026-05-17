@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 import { headers } from 'next/headers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-04-10', 
+  apiVersion: '2026-04-22.dahlia', // Updated to satisfy the newest Stripe SDK
 });
 
 export async function createCheckoutSession(cartItems: any[]) {
@@ -41,7 +41,6 @@ export async function createCheckoutSession(cartItems: any[]) {
       }
     });
 
-    // RETURN THE URL INSTEAD OF THE ID
     return { url: session.url };
   } catch (error: any) {
     console.error('Error creating checkout session:', error);
