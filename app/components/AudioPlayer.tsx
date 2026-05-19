@@ -32,7 +32,8 @@ export default function AudioPlayer() {
 
     // 2. LISTEN FOR INSTANT UPDATES (Supabase Realtime)
     const channel = supabase.channel('custom-audio-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, (payload) => {
+      // Added ': any' to payload to bypass strict TypeScript checking
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, (payload: any) => {
         if (payload.new) {
           if (payload.new.profile_song_url) setSongUrl(payload.new.profile_song_url);
           setTrackData({
