@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function SiteBackground() {
   const [bgUrl, setBgUrl] = useState<string | null>(null);
-  const logos = ["/logo.png", "/logo_2.png", "/logo_3.png"];
+  const logos = ["/logo.PNG", "/logo_2.PNG", "/logo_3.PNG"];
   const [currentLogoIndex, setCurrentLogoIndex] = useState(0);
 
   useEffect(() => {
@@ -38,7 +38,9 @@ export default function SiteBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[-1] pointer-events-none bg-black">
+    // Added explicit h-[100dvh] and w-screen to prevent mobile browser collapse
+    <div className="fixed inset-0 w-screen h-[100dvh] z-[-1] pointer-events-none bg-black">
+      
       {/* Primary Global Background Image */}
       {bgUrl && (
         <Image 
@@ -58,7 +60,8 @@ export default function SiteBackground() {
           alt="Canvas" 
           fill 
           sizes="100vw"
-          className="object-contain md:object-cover transition-opacity duration-1000 ease-in-out" 
+          // Removed the 'object-contain' so it fills the screen on mobile just like desktop
+          className="object-cover transition-opacity duration-1000 ease-in-out" 
           priority 
         />
       </div>
