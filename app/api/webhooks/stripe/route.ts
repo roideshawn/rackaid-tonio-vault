@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2026-04-22.dahlia',
 });
 
 // We must use the SERVICE_ROLE_KEY to bypass RLS since webhooks come from an unauthenticated Stripe server
