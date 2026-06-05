@@ -1,12 +1,30 @@
 'use server';
 
-import { createServerActionClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
-export async function saveProduct(formData: FormData) {
+// Helper to initialize the new Supabase SSR client
+async function getSupabase() {
   const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          } catch (error) {}
+        }
+      }
+    }
+  );
+}
+
+export async function saveProduct(formData: FormData) {
+  const supabase = await getSupabase();
 
   const id = formData.get('id') as string | null;
   const name = formData.get('name') as string;
@@ -16,7 +34,6 @@ export async function saveProduct(formData: FormData) {
   const is_featured = formData.get('is_featured') === 'true';
   let image_url = formData.get('existing_image_url') as string;
 
-  // Handle new image upload if a file is provided
   const file = formData.get('image') as File;
   if (file && file.size > 0) {
     const fileExt = file.name.split('.').pop();
@@ -32,22 +49,13 @@ export async function saveProduct(formData: FormData) {
     }
   }
 
-  const productData = {
-    name,
-    description,
-    price,
-    stock,
-    is_featured,
-    image_url,
-  };
+  const productData = { name, description, price, stock, is_featured, image_url };
 
   let error;
   if (id) {
-    // Update existing
     const res = await supabase.from('products').update(productData).eq('id', id);
     error = res.error;
   } else {
-    // Insert new
     const res = await supabase.from('products').insert([productData]);
     error = res.error;
   }
@@ -55,15 +63,14 @@ export async function saveProduct(formData: FormData) {
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/admin/products');
-  revalidatePath('/'); // Refresh homepage Top 8
+  revalidatePath('/');
   revalidatePath('/shop');
   
   return { success: true };
 }
 
 export async function deleteProduct(id: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  const supabase = await getSupabase();
 
   const { error } = await supabase.from('products').delete().eq('id', id);
   if (error) return { success: false, error: error.message };

@@ -1,13 +1,31 @@
 'use server';
 
-import { createServerActionClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
-export async function uploadMediaAsset(formData: FormData) {
+// Helper to initialize the new Supabase SSR client
+async function getSupabase() {
   const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          } catch (error) {}
+        }
+      }
+    }
+  );
+}
 
+export async function uploadMediaAsset(formData: FormData) {
+  const supabase = await getSupabase();
+  
   const file = formData.get('file') as File;
   const bucketName = formData.get('bucket') as string;
 
@@ -38,8 +56,7 @@ export async function uploadMediaAsset(formData: FormData) {
 }
 
 export async function deleteMediaAsset(bucketName: string, path: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerActionClient({ cookies: () => cookieStore });
+  const supabase = await getSupabase();
 
   const { error } = await supabase.storage
     .from(bucketName)
