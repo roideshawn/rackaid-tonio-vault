@@ -1,40 +1,49 @@
-"use client";
-
-import Link from 'next/link';
+import { supabase } from '../lib/supabase';
 import SiteBackground from './components/SiteBackground';
+import HeroModule from './components/modules/HeroModule';
+import TopEightModule from './components/modules/TopEightModule';
+import CommentWallModule from './components/modules/CommentWallModule';
 
-export default function Home() {
+// Force Next.js to dynamically render this page so the CMS changes are instantly visible
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  // Fetch active modules directly from Supabase on the server
+  const { data: modules } = await supabase
+    .from('custom_modules')
+    .select('*')
+    .eq('is_visible', true)
+    .order('sort_order', { ascending: true });
+
   return (
-    <div className="flex flex-col items-center justify-center w-full flex-1 relative min-h-[85vh]">
+    <div className="flex flex-col items-center justify-start w-full flex-1 relative min-h-[100dvh] pb-24">
       
       {/* Dynamic Canvas Background */}
       <SiteBackground />
 
-      {/* MAIN FLOATING CONTENT */}
-      <div className="z-10 flex flex-col items-center text-center px-6 py-20 w-full max-w-5xl mt-10">
+      {/* MAIN MODULAR CANVAS */}
+      <div className="z-10 w-full max-w-5xl px-4 sm:px-6 flex flex-col gap-8 sm:gap-12 mt-10 md:mt-20">
+        
+        {/* Render Engine */}
+        {modules?.map((mod) => {
+          switch (mod.module_type) {
+            case 'hero':
+              return <HeroModule key={mod.id} content={mod.content} />;
+            case 'top_8':
+              return <TopEightModule key={mod.id} content={mod.content} />;
+            case 'comment_wall':
+              return <CommentWallModule key={mod.id} content={mod.content} />;
+            default:
+              return null; // Ignore unknown module types safely
+          }
+        })}
 
-        <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-6 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]">
-          Rule The <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400">Streets</span>
-        </h1>
-
-        <p className="text-lg md:text-2xl text-zinc-200 mb-10 max-w-2xl font-light drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-          Exclusive drops. Unmatched quality. The official Rackaid Tonio storefront is launching soon.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-5">
-          <Link
-            href="/shop"
-            className="px-10 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-lg tracking-widest uppercase rounded shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all hover:scale-105"
-          >
-            Enter Store
-          </Link>
-          <Link
-            href="/about"
-            className="px-10 py-4 border-2 border-zinc-500 hover:border-white text-white font-bold text-lg tracking-widest uppercase rounded transition-all bg-black/30 backdrop-blur-sm"
-          >
-            Join VIP List
-          </Link>
-        </div>
+        {/* CMS Failsafe */}
+        {(!modules || modules.length === 0) && (
+           <div className="text-center py-20 text-zinc-500 font-mono text-xs uppercase tracking-widest bg-black/50 backdrop-blur-md rounded border border-zinc-800">
+             No layout modules active. Configure in Admin Portal.
+           </div>
+        )}
 
       </div>
     </div>
