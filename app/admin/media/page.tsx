@@ -35,7 +35,7 @@ export default function AdminMediaDashboard() {
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(file.name);
         return {
           name: file.name,
-          id: file.id,
+          id: file.id ?? file.name, // TYPE FIX: Fallback to file.name if Supabase id is null
           url: urlData.publicUrl,
         };
       });
